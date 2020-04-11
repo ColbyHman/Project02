@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+service InventorySystem {  
+    rpc getStock(Empty) returns (stream Product);
+    rpc createOrder(Order) returns (Order);
+    rpc getOrder(orderID) returns (Order);
+    rpc updateOrderAddProducts(AddProducts) returns (Order);
+    rpc updateOrderRemoveProducts(RemoveProducts) returns (Order);
+    rpc updateOrderChangeDestination(ChangeDestination) returns (Order);
+    rpc updateOrderChangeDate(ChangeDate) returns (Order);
+    rpc updateOrderIsShipped(IsShipped) returns (Order);
+    rpc updateOrderIsPaid(IsPaid) returns (Order);
+}
+
+message Filename {
+    string name = 1;
+}
+
+message orderID {
+    string id = 1;
+}
+
+message Product {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string manufacturer = 4;
+    string wholesale = 5;
+    string sale = 6;
+    int32 stock = 7;
+}
+
+message Name {
+    string name = 1;
+}
+
+message Description {
+    string info = 1;
+}
+
+message Manufacturer {
+    string name = 1;
+}
+
+message Wholesale {
+    double cost = 1;
+}
+
+message Sale {
+    double cost = 1;
+}
+
+message List{
+    repeated string item = 1;
+}
+
+message Dictionary{
+    map<string, int32> items = 1;
+} 
+
+message Order {
+    string orderID = 1;
+    string destination = 2;
+    string date = 3;
+    map<string, int32> products = 4;
+    bool isPaid = 5;
+    bool isShipped = 6;
+}
+
+message AddProducts{
+    string orderID = 1;
+    map<string, int32> products = 2;
+}
+
+message RemoveProducts{
+    string orderID = 1;
+    map<string, int32> products = 2;
+}
+
+message ChangeDestination{
+    string orderID = 1;
+    string destination = 2;
+}
+
+message ChangeDate{
+    string orderID = 1;
+    string date = 2;
+}
+
+message IsShipped{
+    string orderID = 1;
+    bool isShipped = 2;
+}
+
+message IsPaid{
+    string orderID = 1;
+    bool isPaid = 2;
+}
+
+message Empty {
+
+}
