@@ -12,10 +12,20 @@ class Order():
         self.isShipped = isShipped
 
     def addProduct(self, product, quantity):
+        if product in self.products:
+            quantity += self.products.get(product)
         self.products.update({product: quantity})
     
-    def removeProduct(self, product):
-        self.products.remove(product)
+    def removeProduct(self, product, quantity):
+        orderQuantitiy = self.products.get(product)
+        print(quantity,orderQuantitiy)
+        if quantity >= orderQuantitiy:
+            self.products.pop(product)
+            print("Removed Completely")
+        else:
+            self.products.pop(product)
+            self.products.update({product:orderQuantitiy - quantity})
+            print("Removed Partially")
     
     def changeDate(self, date):
         self.date = date

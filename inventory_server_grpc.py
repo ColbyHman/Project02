@@ -17,10 +17,10 @@ class InventorySystem(InventorySystem_pb2_grpc.InventorySystemServicer):
     ######################
 
     def fillStock(self):
-        self.addProduct("Widget", "This is a Widget", "Widget & Co", "20.00", "3.50")
-        self.addProduct("Gadget", "This is a Gadget", "Gadget & Co", "30.00", "5.50")
-        self.addProduct("Trinket", "This is a Trinket", "Trinket & Co", "10.00", "0.50")
-        self.addProduct("Widget", "This is a Widget", "Widget & Co", "20.00", "3.50")
+        self.addProduct("Widget", "This is a Widget", "Widget & Co", "20.00", "3.50",300)
+        self.addProduct("Gadget", "This is a Gadget", "Gadget & Co", "30.00", "5.50",300)
+        self.addProduct("Trinket", "This is a Trinket", "Trinket & Co", "10.00", "0.50",300)
+        self.addProduct("Widget", "This is a Widget", "Widget & Co", "20.00", "3.50",300)
 
     # Saves the database to a pickle file
     # TESTED
@@ -65,10 +65,10 @@ class InventorySystem(InventorySystem_pb2_grpc.InventorySystemServicer):
 
     # Adds a product using given information, throws an error when product name already exists
     #TESTED
-    def addProduct(self, name, description, manufacturer, wholesale, sale):
+    def addProduct(self, name, description, manufacturer, wholesale, sale, stock):
         if not self.checkNames(name):
             id_ = str(uuid.uuid4())
-            product = Product(id_, name, description, manufacturer, wholesale, sale, 1)
+            product = Product(id_, name, description, manufacturer, wholesale, sale, stock)
             self.database.update({(id_, name): product})
 
     # Checks the names of all products and compares it to the given name to determine product existence
@@ -123,89 +123,93 @@ class InventorySystem(InventorySystem_pb2_grpc.InventorySystemServicer):
                 newOrder.addProduct(product.name, numOfProducts)
                 self.updateProduct(product, "stock", (product.stock-numOfProducts))
             else:
-                print("Could not add",product.name+": not enough in stock")
+                context.set_code(grpc.StatusCode.ABORTED)
+                context.set_details("Could not add " + product.name + ": not enough in stock")
 
         self.orders.update({orderID : newOrder})
-        print(newOrder.products)
         return newOrder.returnOrder()
 
     # Returns an order
-    # NEEDS TO BE TESTED
+    # TESTED
     def getOrder(self, request, context):
         orderID = request.id
         order = self.orders.get(orderID)
         return order.returnOrder()
 
     # Returns order with added products
-    # NEEDS TO BE TESTED
+    # TESTED
     def updateOrderAddProducts(self, request, context):
-        orderID = request.order
+        orderID = request.orderID
         productsToAdd = request.products
         order = self.orders.get(orderID)
         for item in productsToAdd.items():
             product, numOfProducts = item
             product = self.getProductByName(product)
             if numOfProducts <= product.stock:
-                order.addProduct(product, numOfProducts)
-                self.updateProduct(product.name, stock, product.stock-numOfProducts)
+                order.addProduct(product.name, numOfProducts)
+                self.updateProduct(product, "stock", (product.stock-numOfProducts))
             else:
-                print("Could not add",product.name+": not enough in stock")
-        return order
+                rcontext.set_code(grpc.StatusCode.ABORTED)
+                context.set_details("Could not add " + product.name + ": not enough in stock")
+        self.orders.update({orderID : order})
+        return order.returnOrder()
 
     # Returns order with removed products
-    # NEEDS TO BE TESTED
+    # TESTED
     def updateOrderRemoveProducts(self, request, context):
-        orderID = request.order
+        orderID = request.orderID
         productsToRemove = request.products
         order = self.orders.get(orderID)
-        for item in productsToRemove:
+        for item in productsToRemove.items():
             product, numOfProducts = item
             product = self.getProductByName(product)
-            if numOfProducts <= product.stock:
-                order.removeProduct(product, numOfProducts)
-                self.updateProduct(product.name, stock, product.stock+numOfProducts)
-        return order
+            if product.name in order.products.keys():
+                order.removeProduct(product.name, numOfProducts)
+                self.updateProduct(product, "stock", (product.stock+numOfProducts))
+            else:
+                context.set_code(grpc.StatusCode.ABORTED)
+                context.set_details("Could not remove "+product.name+": not in your order")
+        self.orders.update({orderID : order})
+        return order.returnOrder()
 
     # Returns order with updated location
-    # NEEDS TO BE TESTED
+    # TESTED
     def updateOrderChangeDestination(self, request, context):
-        orderID = request.order
+        orderID = request.orderID
         destination = request.destination
         order = self.orders.get(orderID)
         order.changeDestination(destination)
-        return order
+        return order.returnOrder()
 
     # Returns order with updated Date
-    # NEEDS TO BE TESTED
+    # TESTED
     def updateOrderChangeDate(self, request, context): 
-        orderID = request.order
+        orderID = request.orderID
         date = request.date
         order = self.orders.get(orderID)
         order.changeDate(date)
-        return order
+        return order.returnOrder()
 
     # Returns order with updated shipping
-    # NEEDS TO BE TESTED
+    # TESTED
     def updateOrderIsShipped(self, request, context):
-        orderID = request.order
+        orderID = request.orderID
         isShipped = request.isShipped
         order = self.orders.get(orderID)
         order.setShipped(isShipped)
-        return order
+        return order.returnOrder()
 
     # Returns order with updated payment
-    # NEEDS TO BE TESTED
+    # TESTED
     def updateOrderIsPaid(self, request, context):
-        orderID = request.order
+        orderID = request.orderID
         isPaid = request.isPaid
         order = self.orders.get(orderID)
         order.setPaid(isPaid)
-        return order
+        return order.returnOrder()
 
 def main():
     inventorySystem = InventorySystem()
-    inventorySystem.fillStock()
-    inventorySystem.saveDatabaseToFile()
     inventorySystem.loadDatabaseFromPickle()
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
