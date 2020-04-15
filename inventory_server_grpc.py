@@ -66,10 +66,14 @@ class InventorySystem(InventorySystem_pb2_grpc.InventorySystemServicer):
     # Adds a product using given information, throws an error when product name already exists
     #TESTED
     def addProduct(self, name, description, manufacturer, wholesale, sale, stock):
-        if not self.checkNames(name):
+        if self.checkNames(name) == False:
             id_ = str(uuid.uuid4())
             product = Product(id_, name, description, manufacturer, wholesale, sale, stock)
             self.database.update({(id_, name): product})
+        else:
+            product = self.getProductByName(name)
+            product.stock = product.stock + stock
+            self.database.update({(product.id, product.name):product})
 
     # Checks the names of all products and compares it to the given name to determine product existence
     #TESTED
