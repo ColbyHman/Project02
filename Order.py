@@ -1,6 +1,3 @@
-import InventorySystem_pb2
-import InventorySystem_pb2_grpc
-
 class Order():
 
     def __init__(self, id, destination, date, products, isPaid, isShipped):
@@ -15,7 +12,8 @@ class Order():
         if product in self.products:
             quantity += self.products.get(product)
         self.products.update({product: quantity})
-    
+
+
     def removeProduct(self, product, quantity):
         orderQuantitiy = self.products.get(product)
         print(quantity,orderQuantitiy)
@@ -26,13 +24,13 @@ class Order():
             self.products.pop(product)
             self.products.update({product:orderQuantitiy - quantity})
             print("Removed Partially")
-    
+
     def changeDate(self, date):
         self.date = date
 
     def changeDestination(self, destination):
         self.destination = destination
-    
+
     def setPaid(self):
         self.isPaid = True
 
@@ -40,5 +38,9 @@ class Order():
         self.isShipped = True
 
     def returnOrder(self):
-        return InventorySystem_pb2.Order(orderID = self.id, destination = self.destination,
-        date = self.date, products=self.products, isPaid = self.isPaid, isShipped = self.isShipped)
+        return Order(id = self.id, destination = self.destination, date = self.date, products=self.products, isPaid = self.isPaid, isShipped = self.isShipped)
+
+    def orderToString(self):
+        return "Order ID:{id}\nDestination:{destination}\nDate:{date}\nProducts:{products}\nisPaid:{isPaid}\nisShipped:{isShipped}\n".format(id = self.id, destination = self.destination, date = self.date, products=self.products, isPaid = self.isPaid, isShipped = self.isShipped)
+
+        
